@@ -1,0 +1,14 @@
+{
+  "name": "contentcapture-master",
+  "version": "1.0.0",
+  "description": "capture web page content by pptr and cdp",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "puppeteer": "^1.19.0"
+  }
+}
