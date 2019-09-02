@@ -1,10 +1,9 @@
 const Node = require('./Node');
 
 class Area {
-    constructor(client, page, targetId, tree, id) {
+    constructor(client, page, tree, id) {
         this._client = client;
         this._page = page;
-        this._targetId = targetId;
         this.id = id;
         this._highlightConfig = { contentColor: { r: 111, g: 168, b: 220, a: 0.66 } };
         this._tree = tree;
@@ -13,26 +12,27 @@ class Area {
         this.elements = [];
     }
 
-    async selectParent() {
-        let parent = this.getParent();
-        if (parent) {
-            await parent.highlight();
-            return parent;
-        }
+    /**
+     * 开始选择区域
+     */
+    async startSelecting() {
+        await this._client.send('Overlay.setInspectMode', {
+            mode: 'searchForNode',
+            highlightConfig: this._highlightConfig
+        });
     }
-
+    
     /**
      * 选中区域
      */
     async selected() {
-        await this.highlight();
-        return this.getPickResponse();
+        await this._highlight();
     }
 
     /**
      * 选中确认
      */
-    async selectingComplete() {
+    async selectConfirm() {
         await this._client.send('Overlay.hideHighlight');
         let box = await this._client.send('DOM.getBoxModel', {
             nodeId: this.id
@@ -40,33 +40,35 @@ class Area {
         await this._drawArea(box, this.id);
     }
 
+    /**
+     * 响应
+     */
     getPickResponse() {
         return {
             subject: 'areaPick',
             arguments: {
-                targetId: this._targetId,
+                targetId: this._page._targetId,
                 areaId: this.id,
-                guid: this._guid(),
                 selector: this.selector
             }
         };
     }
 
-    async highlight() {
-        await this.node.highlight(this._highlightConfig);
-    }
-
-    isElementInArea(elementId) {
+    include(elementId) {
         return this.node.contains(elementId);
     }
 
     getParent() {
         let parentNode = this._tree.getParentNode(this.id);
-        return new Area(this._client, this._page, this._targetId, this._tree, parentNode.nodeId);
+        return new Area(this._client, this._page, this._tree, parentNode.nodeId);
     }
 
     getElement(elementId) {
         return this.elements.find(p => p.id === elementId);
+    }
+
+    async _highlight() {
+        await this.node.highlight(this._highlightConfig);
     }
 
     async _drawArea(box, areaId) {
@@ -122,27 +124,6 @@ class Area {
                 parent.appendChild(area);
             }
         }, box, areaId);
-    }
-
-    _guid(len, radix) {
-        let chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('');
-        let uuid = [], i;
-        radix = radix || chars.length;
-        if (len) {
-            for (i = 0; i < len; i++) uuid[i] = chars[0 | Math.random() * radix];
-        } else {
-            let r;
-            uuid[8] = uuid[13] = uuid[18] = uuid[23] = '-';
-            uuid[14] = '4';
-            for (i = 0; i < 36; i++) {
-                if (!uuid[i]) {
-                    r = 0 | Math.random() * 16;
-                    uuid[i] = chars[i === 19 ? r & 0x3 | 0x8 : r];
-                }
-            }
-        }
-
-        return uuid.join('');
     }
 }
 

@@ -6,10 +6,9 @@ const Element = require('./Element');
  * 数据抓取主体类
  */
 class DataCapture {
-    constructor(page, client, targetId, responseCallback) {
+    constructor(page, client, responseCallback) {
         this._page = page;
         this._client = client;
-        this._targetId = targetId;
         this._tree = new Tree(client);
         this._highlightConfig = { contentColor: { r: 111, g: 168, b: 220, a: 0.66 } };
         this._areas = [];
@@ -59,7 +58,7 @@ class DataCapture {
                     }
                 }
             } else {
-                let area = new Area(this._client, this._page, this._targetId, this._tree, nodeId);
+                let area = new Area(this._client, this._page, this._tree, nodeId);
                 let action = await area.selected();
                 this._selectedArea = area;
                 this._responseCallback(action);
@@ -125,7 +124,10 @@ class DataCapture {
             this._areas.push(this._selectedArea);
         } else {
             await this._selectedElement.selectingComplete();
-            this._selectedArea.elements.push(this._selectedElement);
+            let area = this._getArea(this._selectedArea.id);
+            if (area) {
+                area.elements.push(this._selectedElement);
+            }
         }
         await this.startSelecting();
     }
