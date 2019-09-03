@@ -41,6 +41,21 @@ class Area {
     }
 
     /**
+     * 清除区域
+     */
+    async clear() {
+        await this._page.evaluate((areaId) => {
+            let boxEle = document.querySelector('#xly_area_boxs');
+            if (boxEle) {
+                let areaEle = boxEle.querySelector(`#xly_area_id${areaId}`);
+                if (areaEle) {
+                    box.removeChild(areaEle);
+                }
+            }
+        }, this.id);
+    }
+
+    /**
      * 响应
      */
     getPickResponse() {
@@ -54,6 +69,10 @@ class Area {
         };
     }
 
+    /**
+     * 判断元素是否在区域中
+     * @param {number} elementId 
+     */
     include(elementId) {
         return this.node.contains(elementId);
     }

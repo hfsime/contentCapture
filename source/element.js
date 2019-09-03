@@ -8,18 +8,18 @@ class Element {
         this.node = new Node(client, tree, id);
         this.id = id;
         this._highlightConfig = { contentColor: { r: 111, g: 168, b: 220, a: 0.66 } };
-        this._selectorByClass = this._getClassSelector().replace(/\s/g, '');
-        this._selectorByXpath = this._getXpathSelector().replace(/\s/g, '');
-        this._onlySelector = this._getOnlySelector().replace(/\s/g, '');
         this._relationMode = 'None';
+        this._classSelector = '';
+        this._xpathSelector = '';
     }
 
-    async selectParent() {
-        let parent = this.getParent();
-        if (parent) {
-            await parent.highlight();
-            return parent;
-        }
+    /**
+     * 获取父元素
+     */
+    getParent() {
+        let parentNode = this._tree.getParentNode(this.id);
+        if (parentNode.nodeId !== this._area.id)
+            return new Element(this._client, this._tree, this._area, parentNode.nodeId);
     }
 
     /**
@@ -27,7 +27,6 @@ class Element {
      */
     async selected() {
         await this.highlight();
-        return this.getPickReponse();
     }
 
     /**
@@ -41,43 +40,21 @@ class Element {
      * 元素关联
      */
     async relation() {
-        let response = this.getPickReponse();
         switch (this._relationMode) {
             case 'XPath':
-                await this.highlightRelevantByXpath();
+                await this._xpathRelationHighlight();
                 this._relationMode = 'None';
                 break;
 
             case 'Class':
-                await this.highlightRelevantByClass();
+                await this._classRelationHighlight();
                 this._relationMode = 'XPath';
                 break;
 
             case 'None':
-                await this.highlight();
+                await this._highlight();
                 this._relationMode = 'Class';
         }
-
-        return response;
-    }
-
-    /**
-     * 切换元素选择器
-     */
-    async changeSelector() {
-        switch (this._relationMode) {
-            case 'XPath':
-                await this.highlightRelevantByXpath();
-                this._relationMode = 'Class';
-                break;
-
-            case 'Class':
-                await this.highlightRelevantByClass();
-                this._relationMode = 'XPath';
-                break;
-        }
-
-        return this.getPickReponse();
     }
 
     getPickReponse() {
@@ -86,41 +63,38 @@ class Element {
             arguments: {
                 multiSelectMode: this._relationMode,
                 elementId: this.id,
-                areaId: this._area.id,
-                selector: this._onlySelector,
-                multiClass: this._selectorByClass,
-                multiXPath: this._selectorByXpath
+                areaId: this._area.id
             }
         };
     }
 
-    async highlightRelevantByClass() {
+    async _classRelationHighlight() {
+        if (!this._classSelector) {
+            this._classSelector = this._getClassSelector().replace(/\s/g, '');
+        }
         await this._client.send('Overlay.highlightNode', {
             highlightConfig: this._highlightConfig,
             nodeId: this.id,
-            selector: this._selectorByClass
+            selector: this._classSelector
         });
     }
 
-    async highlightRelevantByXpath() {
+    async _xpathRelationHighlight() {
+        if (!this._xpathSelector) {
+            this._xpathSelector = this._getXpathSelector().replace(/\s/g, '');
+        }
         await this._client.send('Overlay.highlightNode', {
             highlightConfig: this._highlightConfig,
             nodeId: this.id,
-            selector: this._selectorByXpath
+            selector: this._xpathSelector
         });
     }
 
-    async highlight() {
+    async _highlight() {
         await this._client.send('Overlay.highlightNode', {
             highlightConfig: this._highlightConfig,
             nodeId: this.id
         });
-    }
-
-    getParent() {
-        let parentNode = this._tree.getParentNode(this.id);
-        if (parentNode.nodeId !== this._area.id)
-            return new Element(this._client, this._tree, this._area, parentNode.nodeId);
     }
 
     _getClassSelector() {
@@ -135,7 +109,7 @@ class Element {
         return `${this._area.selector}>${elementSplits.join('>')}`;
     }
 
-    _getOnlySelector() {
+    _getSelector() {
         let elementXpath = this.node.getSelector(this._area.node);
         let selector = this._area.selector;
         return `${selector}>${elementXpath}`;

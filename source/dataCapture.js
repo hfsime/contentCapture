@@ -75,15 +75,17 @@ class DataCapture {
 
     async selectParent() {
         if (this._selectMode === 'element') {
-            let parent = await this._selectedElement.selectParent();
+            let parent = await this._selectedElement.getParent();
             if (parent) {
+                await parent.selected();
                 this._selectedElement = parent;
                 let action = parent.getPickReponse();
                 this._responseCallback(action);
             }
         } else {
-            let parent = await this._selectedArea.selectParent();
+            let parent = await this._selectedArea.getParent();
             if (parent) {
+                await parent.selected();
                 this._selectedArea = parent;
                 let action = parent.getPickResponse();
                 this._responseCallback(action);
@@ -151,9 +153,10 @@ class DataCapture {
     async deleteArea(areaId) {
         let areaIndex = this._areas.findIndex(p => p.id === areaId);
         if (areaIndex > -1) {
+            let area = this._areas[areaIndex];
+            await area.clear();
             this._areas.splice(areaIndex, 1);
         }
-        await this.clearAreaBoxes(areaId);
     }
 
     /**
@@ -173,8 +176,8 @@ class DataCapture {
      * 停止抓取
      */
     async stopCapture() {
+        await this._removeAreas();
         await this._client.detach();
-        await this.clearAreaBoxes();
     }
 
     _getArea(areaId) {
@@ -191,27 +194,15 @@ class DataCapture {
 
     /**
      * 清除区域选择框
-     * @param {number} areaId 
      */
-    async clearAreaBoxes(areaId = null) {
-        await this._page.evaluate((areaId) => {
-            let box = document.querySelector('#xly_area_boxs');
-            if (box && areaId === null) {
+    async _removeAreas() {
+        this._areas.length = 0;
+        await this._page.evaluate(() => {
+            let boxEle = document.querySelector('#xly_area_boxs');
+            if (boxEle) {
                 document.body.removeChild(box);
-            } else {
-                let child = box.querySelector(`#xly_area_id${areaId}`);
-                if (child)
-                    box.removeChild(child);
             }
-        }, areaId);
-        if (areaId !== null) {
-            for (let [index, area] of this._areas.entries()) {
-                if (area.id === areaId) {
-                    this._areas.splice(index, 1);
-                    break;
-                }
-            }
-        }
+        });
     }
 }
 
