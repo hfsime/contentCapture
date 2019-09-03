@@ -33,35 +33,25 @@ class DataCapture {
 
             if (this._selectMode === 'element') {
                 if (!this._selectedArea) {
-                    // 有取消区域选择，_selectedArea会置空
-                    for (let i = 0; i < this._areas.length; i++) {
-                        if (this._areas[i].isElementInArea(nodeId)) {
-                            this._selectedArea = this._areas[i];
-                            break;
-                        }
-                    }
-                    if (!this._selectedArea) {
-                        await this.startSelecting();
-                        return;
-                    }
+                    this._selectedArea = this._getAreaByElementId(nodeId);
                 }
                 
                 let area = this._selectedArea;
-                let isElementInArea = area.isElementInArea(nodeId);
-                if (isElementInArea) {
+                let inArea = area.include(nodeId);
+                if (inArea) {
                     let exists = area.getElement(nodeId);
                     if (!exists) {
                         let element = new Element(this._client, this._tree, area, nodeId);
-                        let action = await element.selected();
+                        await element.selected();
                         this._selectedElement = element;
-                        this._responseCallback(action);
+                        this._responseCallback(element.getPickReponse());
                     }
                 }
             } else {
                 let area = new Area(this._client, this._page, this._tree, nodeId);
-                let action = await area.selected();
+                await area.selected();
                 this._selectedArea = area;
-                this._responseCallback(action);
+                this._responseCallback(area.getPickResponse());
             }
         });
     }
@@ -182,6 +172,14 @@ class DataCapture {
 
     _getArea(areaId) {
         return this._areas.find(p => p.id === areaId);
+    }
+
+    _getAreaByElementId(elementId) {
+        for (let area of this._areas) {
+            if (area.include(elementId)) {
+                return area;
+            }
+        }
     }
 
     _getElement(areaId, elementId) {
