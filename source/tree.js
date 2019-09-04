@@ -19,8 +19,22 @@ class Tree {
     getNode(nodeId) {
         let nodeInfo = this._tree[nodeId];
         if (nodeInfo) {
-            return new Node(client, nodeInfo);
+            return new Node(this._client, nodeInfo);
         }
+    }
+
+    async getNodeSelector(selectorMode, nodeId) {
+        switch (selectorMode) {
+            case 'default':
+                break;
+
+            case 'class':
+                break;
+
+            case 'xpath':
+                break;
+        }
+        return '';
     }
 }
 

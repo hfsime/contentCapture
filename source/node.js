@@ -5,22 +5,29 @@ class Node {
         this.parentId = nodeInfo.parentId;
     }
 
-    async highlight(highlightConfig) {
+    async highlight(highlightConfig, relationSelector=null) {
         try {
             let boxModel = await this._client.send('DOM.getBoxModel', { nodeId: this.id });
-            //获取子元素的区域大小
             if (boxModel.model.width === 0 || boxModel.model.height === 0) {
-                //获取子元素的区域大小
                 let box = await this._getBox();
                 if (box) {
-                    await this._highlightRect(box.x, box.y, box.width, box.height);
+                    await this._highlightRect(highlightConfig, box.x, box.y, box.width, box.height);
                 }
             } else {
-                await this._highlightNode(highlightConfig, this.id);
+                await this._highlightNode(highlightConfig, relationSelector);
             }
         } catch (error) {
             console.log('该元素是隐藏元素');
         }
+    }
+
+    async cancelHighlight() {
+        await this._client.send('Overlay.hideHighlight');
+    }
+
+    async getClassName() {
+        let response = await this._client.send('DOM.collectClassNamesFromSubtree', { nodeId: this.id });
+        return response.classNames.join('.');
     }
 
     async _getBox() {
@@ -91,20 +98,28 @@ class Node {
         };
     }
 
-    async _highlightNode(highlightConfig) {
-        await this._client.send('Overlay.highlightNode', {
-            highlightConfig: highlightConfig,
-            nodeId: this.id
-        });
+    async _highlightNode(highlightConfig, relationSelector=null) {
+        if (relationSelector) {
+            await this._client.send('Overlay.highlightNode', {
+                highlightConfig: highlightConfig,
+                nodeId: this.id,
+                selector: relationSelector
+            });
+        } else {
+            await this._client.send('Overlay.highlightNode', {
+                highlightConfig: highlightConfig,
+                nodeId: this.id
+            });
+        }
     }
 
-    async _highlightRect(x, y, width, height) {
+    async _highlightRect(highlightConfig, x, y, width, height) {
         await this._client.send('Overlay.highlightRect', {
             x: x,
             y: y,
             width: width,
             height: height,
-            color: { r: 111, g: 168, b: 220, a: 0.66 }
+            color: highlightConfig.contentColor
         });
     }
 }
