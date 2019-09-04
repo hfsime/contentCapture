@@ -19,7 +19,7 @@ class DataCapture {
     }
 
     async startCapture() {
-        this._tree.contribute();
+        await this._tree.contribute();
         await this._client.send('DOM.enable');
         await this._client.send('Overlay.enable');
 

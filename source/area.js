@@ -8,7 +8,6 @@ class Area {
         this._highlightConfig = { contentColor: { r: 111, g: 168, b: 220, a: 0.66 } };
         this._tree = tree;
         this.node = this._tree.getNode(id);
-        this.selector = this.node.getSelector().replace(/\s/g, '');
         this.elements = [];
     }
 

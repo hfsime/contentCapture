@@ -23,22 +23,64 @@ class Tree {
         }
     }
 
-    async getNodeSelector(selectorMode, nodeId) {
+    async getNodeSelector(selectorMode, nodeId, parentNodeId=null) {
+        let selector = '';
         switch (selectorMode) {
             case 'default':
                 break;
 
             case 'class':
+                selector = this._getSelectorForClass(nodeId, parentNodeId);
                 break;
 
             case 'xpath':
                 break;
         }
-        return '';
+        return selector;
     }
 
     async isChild(nodeId, childId) {
+        let nodeInfo = this._tree[childId];
+        while (!nodeInfo.parentId) {
+            nodeInfo = this._tree[nodeInfo.parentId];
+            if (nodeInfo.nodeId === nodeId) {
+                return true;
+            }
+        }
+
         return false;
+    }
+
+    _getSelectorForClass(nodeId, parentNodeId = null) {
+        let nodeInfo = this._tree[nodeId];
+        let nodeChain = [this._getClassName(nodeInfo.nodeId)];
+        while (nodeInfo.parentId) {
+            if (parentNodeId === nodeInfo.parentId) {
+                break;
+            }
+            nodeInfo = this._tree[nodeInfo.parentId];
+            let className = this._getClassName(nodeInfo.nodeId);
+            nodeChain.push(className);
+
+            if (nodeInfo.nodeName.toLowerCase() === 'body') {
+                break;
+            }
+        }
+
+        return nodeChain.reverse().join('>');
+    }
+
+    _getClassName(nodeId) {
+        let nodeInfo = this._tree[nodeId];
+        let attrbutes = nodeInfo.attributes;
+        if (attrbutes) {
+            let attrIndex = attrbutes.findIndex(e => e === 'class');
+            if (attrIndex > -1) {
+                return `${nodeInfo.nodeName}.${attrbutes[attrIndex + 1].split(' ').join('.')}`;
+            }
+        }
+
+        return nodeInfo.nodeName;
     }
 }
 
