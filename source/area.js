@@ -7,7 +7,7 @@ class Area {
         this.id = id;
         this._highlightConfig = { contentColor: { r: 111, g: 168, b: 220, a: 0.66 } };
         this._tree = tree;
-        this.node = new Node(client, tree, id);
+        this.node = this._tree.getNode(id);
         this.selector = this.node.getSelector().replace(/\s/g, '');
         this.elements = [];
     }
@@ -26,14 +26,14 @@ class Area {
      * 选中区域
      */
     async selected() {
-        await this._highlight();
+        await this.node.highlight(this._highlightConfig);
     }
 
     /**
      * 选中确认
      */
     async selectConfirm() {
-        await this._client.send('Overlay.hideHighlight');
+        await this.node.cancelHighlight();
         let box = await this._client.send('DOM.getBoxModel', {
             nodeId: this.id
         });
@@ -56,38 +56,26 @@ class Area {
     }
 
     /**
-     * 响应
-     */
-    getPickResponse() {
-        return {
-            subject: 'areaPick',
-            arguments: {
-                targetId: this._page._targetId,
-                areaId: this.id,
-                selector: this.selector
-            }
-        };
-    }
-
-    /**
      * 判断元素是否在区域中
      * @param {number} elementId 
      */
     include(elementId) {
-        return this.node.contains(elementId);
+        return this._tree.isChild(this.id, elementId);
     }
 
+    /**
+     * 获取父区域
+     */
     getParent() {
-        let parentNode = this._tree.getParentNode(this.id);
-        return new Area(this._client, this._page, this._tree, parentNode.nodeId);
+        let parentNode = this._tree.getNode(this.node.parentId);
+        return new Area(this._client, this._page, this._tree, parentNode.id);
     }
 
+    /**
+     * 获取区域中添加的元素
+     */
     getElement(elementId) {
         return this.elements.find(p => p.id === elementId);
-    }
-
-    async _highlight() {
-        await this.node.highlight(this._highlightConfig);
     }
 
     async _drawArea(box, areaId) {

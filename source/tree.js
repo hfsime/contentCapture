@@ -36,6 +36,10 @@ class Tree {
         }
         return '';
     }
+
+    async isChild(nodeId, childId) {
+        return false;
+    }
 }
 
 module.exports = Tree;
