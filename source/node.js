@@ -1,18 +1,8 @@
 class Node {
-    constructor(client, tree, id) {
+    constructor(client, nodeInfo) {
         this._client = client;
-        this._tree = tree;
         this.id = id;
-        this._node = tree.getNode(id);
-    }
-
-    contains(nodeId) {
-        let node = this._tree.getNode(nodeId, this._node);
-        if (node) {
-            return true;
-        } else {
-            return false;
-        }
+        this.parentId = nodeInfo.parentId;
     }
 
     async highlight(highlightConfig) {
@@ -31,21 +21,6 @@ class Node {
         } catch (error) {
             console.log('该元素是隐藏元素');
         }
-    }
-
-    getSelector(parentNode = null) {
-        if (parentNode) {
-            let node = parentNode._node;
-            return this._calculateSelector(node, this.id);
-        } else {
-            let node = this._tree.getRoot();
-            return this._calculateSelector(node, this.id, 'body');
-        }
-    }
-
-    getClassSelector(parentNode = null) {
-        let node = parentNode ? parentNode._node : this._tree.getRoot();
-        return this._calculateClassSelector(node, this.id);
     }
 
     async _getBox() {
@@ -131,94 +106,6 @@ class Node {
             height: height,
             color: { r: 111, g: 168, b: 220, a: 0.66 }
         });
-    }
-
-    _calculateSelector(parentNode, nodeId, xpath = '') {
-        let children = parentNode.children;
-        // if (parentNode.nodeName.toLowerCase() === 'iframe') {
-        //     children = parentNode.contentDocument.children;
-        // }
-        if (!children) {
-            return;
-        }
-
-        children = children.filter(e => e.nodeType === 1);
-        let matchNodeIndex = children.findIndex(p => p.nodeId === nodeId);
-        if (matchNodeIndex > -1) {
-            let matchNode = children[matchNodeIndex];
-            if (xpath) {
-                return `${xpath} > ${matchNode.nodeName}:nth-child(${matchNodeIndex + 1})`;
-            } else {
-                return `${matchNode.nodeName}:nth-child(${matchNodeIndex + 1})`;
-            }
-        }
-
-        for (let i = 0; i < children.length; i++) {
-            let subXpath = xpath;
-            let nodename = children[i].nodeName.toLowerCase();
-            if (nodename === 'head') {
-                continue;
-            }
-            if (nodename !== 'html' && nodename !== 'body') {
-                if (subXpath) {
-                    subXpath = `${xpath} > ${children[i].nodeName}:nth-child(${i + 1})`;
-                } else {
-                    subXpath = `${children[i].nodeName}:nth-child(${i + 1})`;
-                }
-            }
-
-            let selector = this._calculateSelector(children[i], nodeId, subXpath);
-            if (selector) {
-                return selector;
-            }
-        }
-    }
-
-    _calculateClassSelector(parentNode, nodeId, classSelector = '') {
-        let children = parentNode.children;
-        if (!children) {
-            return;
-        }
-
-        children = children.filter(e => e.nodeType === 1);
-        let matchNodeIndex = children.findIndex(p => p.nodeId === nodeId);
-        if (matchNodeIndex > -1) {
-            let matchNode = children[matchNodeIndex];
-            let strNodeClass = this._getClassAttribute(matchNode);
-            classSelector = classSelector ? `${classSelector} >` : classSelector;
-            return `${classSelector} ${matchNode.nodeName}${strNodeClass}`;
-        }
-
-        for (let i = 0; i < children.length; i++) {
-            let subXpath = classSelector;
-            if (subXpath) {
-                subXpath = `${classSelector} > ${children[i].nodeName}`;
-            } else {
-                subXpath = `${children[i].nodeName}`;
-            }
-
-            let selector = this._calculateClassSelector(children[i], nodeId, subXpath);
-            if (selector) {
-                return selector;
-            }
-        }
-    }
-
-    _getClassAttribute(node) {
-        let strClass = '';
-        let nodeAttributes = node.attributes;
-        if (nodeAttributes) {
-            let classIndex = nodeAttributes.findIndex(e => e === 'class');
-            if (classIndex > -1) {
-                let classSplits = nodeAttributes[classIndex + 1].split(' ');
-                for (let i = 0; i < classSplits.length; i++) {
-                    if (classSplits[i])
-                        strClass = `${strClass}.${classSplits[i]}`;
-                }
-            }
-        }
-
-        return strClass;
     }
 }
 
