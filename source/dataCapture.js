@@ -60,6 +60,9 @@ class DataCapture {
         });
     }
 
+    /**
+     * 选中父元素
+     */
     async selectParent() {
         if (this._selectMode === 'element') {
             let parent = await this._selectedElement.getParent();

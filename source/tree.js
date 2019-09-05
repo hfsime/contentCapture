@@ -54,37 +54,22 @@ class Tree {
     }
 
     /**
-     * 获取节点的xpath类型的选择器
+     * 获取父节点信息
      * @param {number} nodeId 
-     * @param {number} parentNodeId 
      */
-    getSelectorForXpath(nodeId, parentNodeId = null) {
-        let nodeChain = [];
-        let parentNodeInfo = this._getParentNodeInfo(nodeId);
-        while (parentNodeInfo) {
-            if (parentNodeInfo.nodeId === parentNodeId) {
-                break;
-            }
-            nodeChain.push(this._getNodeXpath(parentNodeInfo, nodeId));
-            nodeId = parentNodeInfo.nodeId;
-            parentNodeInfo = this._getParentNodeInfo(nodeId);
-
-            if (parentNodeInfo.nodeName.toLowerCase() === 'body') {
-                break;
-            }
-        }
-
-        return nodeChain.reverse().join('>');
-    }
-
-    _getParentNodeInfo(nodeId) {
+    getParentNodeInfo(nodeId) {
         let parentNodeId = this._tree[nodeId].parentId;
         if (parentNodeId) {
             return this._tree[parentNodeId];
         }
     }
 
-    _getNodeXpath(parentNodeInfo, nodeId) {
+    /**
+     * 获取节点的xpath值
+     * @param {object} parentNodeInfo 
+     * @param {number} nodeId 
+     */
+    getNodeXpath(parentNodeInfo, nodeId) {
         let childIndex = parentNodeInfo.children.indexOf(nodeId);
         return `${parentNodeInfo.nodeName}:nth-child(${childIndex + 1})`;
     }
@@ -94,7 +79,7 @@ class Tree {
      * @param {number} nodeId 
      * @param {number} parentNodeId 
      */
-    getSelectorForClass(nodeId, parentNodeId = null) {
+    getSelectorForClass(nodeId, parentNodeId) {
         let nodeInfo = this._tree[nodeId];
         let nodeChain = [this._getClassName(nodeInfo.nodeId)];
         while (nodeInfo.parentId) {
@@ -111,6 +96,26 @@ class Tree {
         }
 
         return nodeChain.reverse().join('>');
+    }
+
+    /**
+     * 获取iframe的节点的id属性值
+     * @param {object} nodeInfo 
+     */
+    async getFrameId(nodeInfo) {
+        if (nodeInfo.frameId && nodeInfo.nodeName.toLowerCase() === 'html') {
+            let response = await this._client.send('DOM.getFrameOwner', { frameId: nodeInfo.frameId });
+            let frameNode = this.getParentNodeInfo(response.nodeId);
+            if (frameNode) {
+                let attrbutes = nodeInfo.attributes;
+                if (attrbutes) {
+                    let attrIndex = attrbutes.findIndex(e => e === 'id');
+                    if (attrIndex > -1) {
+                        return attrbutes[attrIndex + 1];
+                    }
+                }
+            }
+        }
     }
 
     _getClassName(nodeId) {

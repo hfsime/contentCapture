@@ -9,6 +9,7 @@ class Area {
         this._tree = tree;
         this.node = this._tree.getNode(id);
         this.elements = [];
+        this.selector = '';
         this._frameId = '';
     }
 
@@ -148,6 +149,31 @@ class Area {
                 parent.appendChild(area);
             }
         }, box, areaId);
+    }
+
+    /**
+     * 获取节点的xpath类型的选择器
+     * @param {number} nodeId 
+     */
+    _getSelectorForXpath(nodeId) {
+        let nodeChain = [];
+        let parentNodeInfo = this._tree.getParentNodeInfo(nodeId);
+        while (parentNodeInfo) {
+            nodeChain.push(this._tree.getNodeXpath(parentNodeInfo, nodeId));
+            nodeId = parentNodeInfo.nodeId;
+            parentNodeInfo = this._tree.getParentNodeInfo(nodeId);
+
+            if (parentNodeInfo.nodeName.toLowerCase() === 'body') {
+                let htmlNodeInfo = this._tree.getParentNodeInfo(parentNodeInfo.nodeId);
+                let frameId = await this.getFrameId(htmlNodeInfo);
+                if (frameId) {
+                    this._frameId = frameId;
+                }
+                break;
+            }
+        }
+
+        return nodeChain.reverse().join('>');
     }
 }
 

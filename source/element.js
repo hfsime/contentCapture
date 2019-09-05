@@ -53,7 +53,7 @@ class Element {
         let selector = '';
         switch (selectorMode) {
             case 'default':
-                selector = this.node.getSelectorForXpath(nodeId, parentNodeId);
+                selector = this._getSelectorForXpath(nodeId, parentNodeId);
                 break;
 
             case 'class':
@@ -61,13 +61,37 @@ class Element {
                 break;
 
             case 'xpath':
-                selector = this.node.getSelectorForXpath(nodeId, parentNodeId);
+                selector = this._getSelectorForXpath(nodeId, parentNodeId);
                 let splits = selector.split('>');
                 splits[0] = splits[0].split(':')[0];
                 selector = splits.join('>');
                 break;
         }
         return selector;
+    }
+
+    /**
+     * 获取节点的xpath类型的选择器
+     * @param {number} nodeId 
+     * @param {number} parentNodeId 
+     */
+    _getSelectorForXpath(nodeId, parentNodeId = null) {
+        let nodeChain = [];
+        let parentNodeInfo = this._tree.getParentNodeInfo(nodeId);
+        while (parentNodeInfo) {
+            if (parentNodeInfo.nodeId === parentNodeId) {
+                break;
+            }
+            nodeChain.push(this._tree.getNodeXpath(parentNodeInfo, nodeId));
+            nodeId = parentNodeInfo.nodeId;
+            parentNodeInfo = this._tree.getParentNodeInfo(nodeId);
+
+            if (parentNodeInfo.nodeName.toLowerCase() === 'body') {
+                break;
+            }
+        }
+
+        return nodeChain.reverse().join('>');
     }
 }
 
