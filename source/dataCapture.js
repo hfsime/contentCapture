@@ -5,10 +5,10 @@ const Area = require('./Area');
  * 数据抓取器
  */
 class DataCapture {
-    constructor(page, client, responseCallback) {
+    constructor(page, responseCallback) {
         this._page = page;
-        this._client = client;
-        this._tree = new Tree(client);
+        this._client = null;
+        this._tree = null;
         this._highlightConfig = { contentColor: { r: 111, g: 168, b: 220, a: 0.66 } };
         this._areas = [];
         this._selectMode = 'area';
@@ -18,9 +18,11 @@ class DataCapture {
     }
 
     async startCapture() {
-        await this._tree.contribute();
+        this._client = await this._page.target().createCDPSession();
         await this._client.send('DOM.enable');
         await this._client.send('Overlay.enable');
+        this._tree = new Tree(this._client);
+        await this._tree.contribute();
 
         this._client.on('Overlay.inspectNodeRequested', async r => {
             let response = await this._client.send('DOM.pushNodesByBackendIdsToFrontend', {
