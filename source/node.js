@@ -3,8 +3,14 @@ class Node {
         this._client = client;
         this.id = id;
         this.parentId = nodeInfo.parentId;
+        this._attrbutes = nodeInfo.attrbutes;
     }
 
+    /**
+     * 高亮
+     * @param {object} highlightConfig 
+     * @param {string} relationSelector 
+     */
     async highlight(highlightConfig, relationSelector=null) {
         try {
             let boxModel = await this._client.send('DOM.getBoxModel', { nodeId: this.id });
@@ -21,13 +27,38 @@ class Node {
         }
     }
 
+    /**
+     * 取消高亮
+     */
     async cancelHighlight() {
         await this._client.send('Overlay.hideHighlight');
     }
 
-    async getClassName() {
-        let response = await this._client.send('DOM.collectClassNamesFromSubtree', { nodeId: this.id });
-        return response.classNames.join('.');
+    /**
+     * 获取类名
+     */
+    getClassName() {
+        let attrbutes = this._attributes;
+        if (attrbutes) {
+            let attrIndex = attrbutes.findIndex(e => e === 'class');
+            if (attrIndex > -1) {
+                return attrbutes[attrIndex + 1].split(' ').join('.');
+            }
+        }
+    }
+
+    /**
+     * 获取属性值
+     * @param {string} attributeName 
+     */
+    getAttribute(attributeName) {
+        let attrbutes = this._attributes;
+        if (attrbutes) {
+            let attrIndex = attrbutes.findIndex(e => e === attributeName);
+            if (attrIndex > -1) {
+                return attrbutes[attrIndex + 1];
+            }
+        }
     }
 
     async _getBox() {

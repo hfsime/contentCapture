@@ -105,27 +105,18 @@ class Tree {
     async getFrameId(nodeInfo) {
         if (nodeInfo.frameId && nodeInfo.nodeName.toLowerCase() === 'html') {
             let response = await this._client.send('DOM.getFrameOwner', { frameId: nodeInfo.frameId });
-            let frameNode = this.getParentNodeInfo(response.nodeId);
-            if (frameNode) {
-                let attrbutes = nodeInfo.attributes;
-                if (attrbutes) {
-                    let attrIndex = attrbutes.findIndex(e => e === 'id');
-                    if (attrIndex > -1) {
-                        return attrbutes[attrIndex + 1];
-                    }
-                }
+            let frameNodeInfo = this.getParentNodeInfo(response.nodeId);
+            if (frameNodeInfo) {
+                return new Node(this._client, frameNodeInfo).getAttribute('id');
             }
         }
     }
 
     _getClassName(nodeId) {
         let nodeInfo = this._tree[nodeId];
-        let attrbutes = nodeInfo.attributes;
-        if (attrbutes) {
-            let attrIndex = attrbutes.findIndex(e => e === 'class');
-            if (attrIndex > -1) {
-                return `${nodeInfo.nodeName}.${attrbutes[attrIndex + 1].split(' ').join('.')}`;
-            }
+        let className = new Node(this._client, nodeInfo).getClassName();
+        if (className) {
+            return `${nodeInfo.nodeName}.${className}`;
         }
 
         return nodeInfo.nodeName;

@@ -165,7 +165,7 @@ class Area {
 
             if (parentNodeInfo.nodeName.toLowerCase() === 'body') {
                 let htmlNodeInfo = this._tree.getParentNodeInfo(parentNodeInfo.nodeId);
-                let frameId = await this.getFrameId(htmlNodeInfo);
+                let frameId = await this._tree.getFrameId(htmlNodeInfo);
                 if (frameId) {
                     this._frameId = frameId;
                 }
