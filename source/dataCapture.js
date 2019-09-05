@@ -2,7 +2,7 @@ const Tree = require('./Tree');
 const Area = require('./Area');
 
 /**
- * 数据抓取主体类
+ * 数据抓取器
  */
 class DataCapture {
     constructor(page, client, responseCallback) {
@@ -58,6 +58,13 @@ class DataCapture {
             mode: 'searchForNode',
             highlightConfig: this._highlightConfig
         });
+    }
+
+    /**
+     * 预览
+     */
+    async preview() {
+
     }
 
     /**
