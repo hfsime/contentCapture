@@ -1,6 +1,5 @@
 const Tree = require('./Tree');
 const Area = require('./Area');
-const Element = require('./Element');
 
 /**
  * 数据抓取主体类
@@ -28,24 +27,22 @@ class DataCapture {
                 backendNodeIds: [r.backendNodeId]
             });
 
-            await this.startSelecting();
             let nodeId = response.nodeIds[0];
+            await this.startSelecting();
 
             if (this._selectMode === 'element') {
-                if (!this._selectedArea) {
-                    this._selectedArea = this._getAreaByElementId(nodeId);
-                }
-                
                 let area = this._selectedArea;
-                let inArea = area.include(nodeId);
-                if (inArea) {
-                    let exists = area.getElement(nodeId);
-                    if (!exists) {
-                        let element = new Element(this._client, this._tree, area, nodeId);
-                        await element.selected();
-                        this._selectedElement = element;
-                        this._responseCallback(element.getPickReponse());
+                for (let a of this._areas) {
+                    if (a.include(nodeId)) {
+                        area = a;
+                        break;
                     }
+                }
+                let element = area.addElement(nodeId);
+                if (element) {
+                    await element.selected();
+                    this._selectedElement = element;
+                    this._responseCallback(element.getPickReponse());
                 }
             } else {
                 let area = new Area(this._client, this._page, this._tree, nodeId);
@@ -155,7 +152,7 @@ class DataCapture {
      * @param {number} elementId 
      */
     async deleteElement(areaId, elementId) {
-        let area = this._areas.find(p => p.id === areaId);
+        let area = this._getArea(areaId);
         if (area) {
             let elementIndex = area.elements.findIndex(p => p.id === elementId);
             area.elements.splice(elementIndex, 1);
@@ -172,22 +169,6 @@ class DataCapture {
 
     _getArea(areaId) {
         return this._areas.find(p => p.id === areaId);
-    }
-
-    _getAreaByElementId(elementId) {
-        for (let area of this._areas) {
-            if (area.include(elementId)) {
-                return area;
-            }
-        }
-    }
-
-    _getElement(areaId, elementId) {
-        let area = this._getArea(areaId);
-        if (area) {
-            let element = area.getElement(elementId);
-            return element;
-        }
     }
 
     /**

@@ -1,3 +1,5 @@
+const Element = require('./element');
+
 class Area {
     constructor(client, page, tree, id) {
         this._client = client;
@@ -70,7 +72,19 @@ class Area {
     }
 
     /**
-     * 获取区域中添加的元素
+     * 添加元素
+     * @param {number} elementId 
+     */
+    addElement(elementId) {
+        if (this.include(elementId) && !this.getElement(elementId)) {
+            let element = new Element(this._client, this._highlightConfig, this._tree, elementId);
+            this.elements.push(element);
+            return element;
+        }
+    }
+
+    /**
+     * 获取元素
      */
     getElement(elementId) {
         return this.elements.find(p => p.id === elementId);
