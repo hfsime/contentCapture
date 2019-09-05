@@ -1,5 +1,3 @@
-const Node = require('./Node');
-
 class Area {
     constructor(client, page, tree, id) {
         this._client = client;
@@ -9,6 +7,7 @@ class Area {
         this._tree = tree;
         this.node = this._tree.getNode(id);
         this.elements = [];
+        this._frameId = '';
     }
 
     /**
@@ -77,6 +76,11 @@ class Area {
         return this.elements.find(p => p.id === elementId);
     }
 
+    /**
+     * 区域画框
+     * @param {object} box 
+     * @param {number} areaId 
+     */
     async _drawArea(box, areaId) {
         await this._page.evaluate((box, areaId) => {
             let parent = document.getElementById('xly_area_boxs'),

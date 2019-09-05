@@ -6,6 +6,9 @@ class Tree {
         this._tree = {};
     }
 
+    /**
+     * 构建DOM节点集合
+     */
     async contribute() {
         this._tree = {};
         await this._client.send('DOM.enable');
@@ -22,6 +25,10 @@ class Tree {
         }
     }
 
+    /**
+     * 获取节点
+     * @param {number} nodeId 
+     */
     getNode(nodeId) {
         let nodeInfo = this._tree[nodeId];
         if (nodeInfo) {
@@ -29,27 +36,11 @@ class Tree {
         }
     }
 
-    async getNodeSelector(selectorMode, nodeId, parentNodeId=null) {
-        let selector = '';
-        switch (selectorMode) {
-            case 'default':
-                selector = this._getSelectorForXpath(nodeId, parentNodeId);
-                break;
-
-            case 'class':
-                selector = this._getSelectorForClass(nodeId, parentNodeId);
-                break;
-
-            case 'xpath':
-                selector = this._getSelectorForXpath(nodeId, parentNodeId);
-                let splits = selector.split('>');
-                splits[0] = splits[0].split(':')[0];
-                selector = splits.join('>');
-                break;
-        }
-        return selector;
-    }
-
+    /**
+     * 是否是子节点
+     * @param {number} nodeId 节点ID
+     * @param {number} childId 子节点ID
+     */
     async isChild(nodeId, childId) {
         let nodeInfo = this._tree[childId];
         while (!nodeInfo.parentId) {
@@ -62,7 +53,12 @@ class Tree {
         return false;
     }
 
-    _getSelectorForXpath(nodeId, parentNodeId = null) {
+    /**
+     * 获取节点的xpath类型的选择器
+     * @param {number} nodeId 
+     * @param {number} parentNodeId 
+     */
+    getSelectorForXpath(nodeId, parentNodeId = null) {
         let nodeChain = [];
         let parentNodeInfo = this._getParentNodeInfo(nodeId);
         while (parentNodeInfo) {
@@ -93,7 +89,12 @@ class Tree {
         return `${parentNodeInfo.nodeName}:nth-child(${childIndex + 1})`;
     }
 
-    _getSelectorForClass(nodeId, parentNodeId = null) {
+    /**
+     * 获取节点的类选择器
+     * @param {number} nodeId 
+     * @param {number} parentNodeId 
+     */
+    getSelectorForClass(nodeId, parentNodeId = null) {
         let nodeInfo = this._tree[nodeId];
         let nodeChain = [this._getClassName(nodeInfo.nodeId)];
         while (nodeInfo.parentId) {

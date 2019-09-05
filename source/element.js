@@ -37,10 +37,37 @@ class Element {
      * 元素关联
      */
     async relation() {
-        let selector = await this._tree.getNodeSelector(this._relationMode, this.node.id);
+        let selector = await this._getNodeSelector(this._relationMode, this.node.id);
         await this.node.highlight(this._highlightConfig, selector);
         let relationModeIndex = relationModes.findIndex(p => p === this._relationMode);
         this._relationMode = relationModes[(relationModeIndex + 1) % relationModes.length];
+    }
+
+    /**
+     * 获取节点选择器
+     * @param {Node} selectorMode 
+     * @param {number} nodeId 
+     * @param {number} parentNodeId 
+     */
+    async _getNodeSelector(selectorMode, nodeId, parentNodeId=null) {
+        let selector = '';
+        switch (selectorMode) {
+            case 'default':
+                selector = this.node.getSelectorForXpath(nodeId, parentNodeId);
+                break;
+
+            case 'class':
+                selector = this.node.getSelectorForClass(nodeId, parentNodeId);
+                break;
+
+            case 'xpath':
+                selector = this.node.getSelectorForXpath(nodeId, parentNodeId);
+                let splits = selector.split('>');
+                splits[0] = splits[0].split(':')[0];
+                selector = splits.join('>');
+                break;
+        }
+        return selector;
     }
 }
 
